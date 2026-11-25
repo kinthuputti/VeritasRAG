@@ -1,0 +1,89 @@
+{"id": "ans01", "type": "answerable", "role": "employee", "question": "How many days of annual leave does a full-time employee get per year?", "gold": ["24 days"], "split": "dev"}
+{"id": "ans02", "type": "answerable", "role": "employee", "question": "How many unused annual leave days can be carried over?", "gold": ["8 unused days"], "split": "test"}
+{"id": "ans03", "type": "answerable", "role": "employee", "question": "When do carried-over leave days expire?", "gold": ["31 March"], "split": "dev"}
+{"id": "ans04", "type": "answerable", "role": "employee", "question": "How many days of paid sick leave do employees receive?", "gold": ["10 days"], "split": "test"}
+{"id": "ans05", "type": "answerable", "role": "employee", "question": "When is a medical certificate required for sick leave?", "gold": ["more than 3 consecutive days"], "split": "test"}
+{"id": "ans06", "type": "answerable", "role": "employee", "question": "How many weeks of paid parental leave do primary caregivers receive?", "gold": ["16 weeks"], "split": "dev"}
+{"id": "ans07", "type": "answerable", "role": "employee", "question": "How far in advance must leave requests be submitted?", "gold": ["at least 5 working days"], "split": "test"}
+{"id": "ans08", "type": "answerable", "role": "employee", "question": "Within how many days must expense claims be submitted?", "gold": ["30 days"], "split": "dev"}
+{"id": "ans09", "type": "answerable", "role": "employee", "question": "What is the daily meal allowance during business travel?", "gold": ["45 dollars"], "split": "test"}
+{"id": "ans10", "type": "answerable", "role": "employee", "question": "Who must approve expenses above 5,000 dollars?", "gold": ["Chief Financial Officer"], "split": "test"}
+{"id": "ans11", "type": "answerable", "role": "employee", "question": "Up to what amount can managers approve expenses?", "gold": ["500 dollars"], "split": "dev"}
+{"id": "ans12", "type": "answerable", "role": "employee", "question": "When are approved expenses paid?", "gold": ["15th of the following month"], "split": "test"}
+{"id": "ans13", "type": "answerable", "role": "employee", "question": "How long is the probation period?", "gold": ["3 months"], "split": "dev"}
+{"id": "ans14", "type": "answerable", "role": "employee", "question": "How many days per week may eligible employees work remotely?", "gold": ["3 days per week"], "split": "test"}
+{"id": "ans15", "type": "answerable", "role": "employee", "question": "On which days must every team be in the office?", "gold": ["Tuesdays and Thursdays"], "split": "test"}
+{"id": "ans16", "type": "answerable", "role": "employee", "question": "How much is the home-office allowance?", "gold": ["600 dollars"], "split": "dev"}
+{"id": "ans17", "type": "answerable", "role": "employee", "question": "What is the minimum password length?", "gold": ["14 characters"], "split": "test"}
+{"id": "ans18", "type": "answerable", "role": "employee", "question": "How often must passwords be changed?", "gold": ["every 180 days"], "split": "dev"}
+{"id": "ans19", "type": "answerable", "role": "employee", "question": "How quickly must a lost device be reported?", "gold": ["within 1 hour"], "split": "test"}
+{"id": "ans20", "type": "answerable", "role": "employee", "question": "What is the hotel limit per night in major cities?", "gold": ["180 dollars per night"], "split": "test"}
+{"id": "ans21", "type": "answerable", "role": "employee", "question": "When may flights be booked in premium economy?", "gold": ["6 hours or longer"], "split": "dev"}
+{"id": "ans22", "type": "answerable", "role": "employee", "question": "How much is the per diem for incidental costs?", "gold": ["30 dollars"], "split": "test"}
+{"id": "ans23", "type": "answerable", "role": "employee", "question": "When is orientation held?", "gold": ["every Monday at 09:30"], "split": "dev"}
+{"id": "ans24", "type": "answerable", "role": "employee", "question": "Within how many days of joining must the data protection course be completed?", "gold": ["30 days"], "split": "test"}
+{"id": "ans25", "type": "answerable", "role": "hr", "question": "What is the salary range for band L4?", "gold": ["62,000 to 85,000 dollars"], "split": "test"}
+{"id": "ans26", "type": "answerable", "role": "hr", "question": "What is the annual bonus target for band L5?", "gold": ["12 percent"], "split": "dev"}
+{"id": "ans27", "type": "answerable", "role": "finance", "question": "By which working day is the month-end close completed?", "gold": ["5th working day"], "split": "test"}
+{"id": "ans28", "type": "answerable", "role": "finance", "question": "Journal entries above what amount need a second approver?", "gold": ["25,000 dollars"], "split": "dev"}
+{"id": "una01", "type": "unanswerable", "role": "employee", "question": "How many days of bereavement leave are provided?", "gold": [], "split": "dev"}
+{"id": "una02", "type": "unanswerable", "role": "employee", "question": "What is the company policy on sabbaticals?", "gold": [], "split": "test"}
+{"id": "una03", "type": "unanswerable", "role": "employee", "question": "What is the office dress code?", "gold": [], "split": "dev"}
+{"id": "una04", "type": "unanswerable", "role": "employee", "question": "How much is the gym membership subsidy?", "gold": [], "split": "test"}
+{"id": "una05", "type": "unanswerable", "role": "employee", "question": "What is the maximum tuition reimbursement per year?", "gold": [], "split": "test"}
+{"id": "una06", "type": "unanswerable", "role": "employee", "question": "Which airline is the preferred carrier?", "gold": [], "split": "dev"}
+{"id": "una07", "type": "unanswerable", "role": "employee", "question": "What is the mileage rate for using a personal car?", "gold": [], "split": "test"}
+{"id": "una08", "type": "unanswerable", "role": "employee", "question": "How many public holidays does the company observe?", "gold": [], "split": "dev"}
+{"id": "una09", "type": "unanswerable", "role": "employee", "question": "What is the policy on pets in the office?", "gold": [], "split": "test"}
+{"id": "una10", "type": "unanswerable", "role": "employee", "question": "Who is the CEO of the company?", "gold": [], "split": "test"}
+{"id": "una11", "type": "unanswerable", "role": "employee", "question": "What is the stock option vesting schedule?", "gold": [], "split": "dev"}
+{"id": "una12", "type": "unanswerable", "role": "employee", "question": "How much is the car parking fee?", "gold": [], "split": "test"}
+{"id": "una13", "type": "unanswerable", "role": "employee", "question": "Does the company sponsor work visas?", "gold": [], "split": "dev"}
+{"id": "una14", "type": "unanswerable", "role": "employee", "question": "What is the relocation allowance for new hires?", "gold": [], "split": "test"}
+{"id": "res01", "type": "restricted", "role": "employee", "question": "What is the salary range for band L4?", "gold": ["62,000 to 85,000 dollars"], "split": "dev"}
+{"id": "res02", "type": "restricted", "role": "employee", "question": "What is the annual bonus target for band L5?", "gold": ["12 percent"], "split": "test"}
+{"id": "res03", "type": "restricted", "role": "employee", "question": "What is the standard merit increase budget?", "gold": ["4 percent"], "split": "dev"}
+{"id": "res04", "type": "restricted", "role": "employee", "question": "What is the cap on a promotion increase in a single cycle?", "gold": ["10 percent"], "split": "test"}
+{"id": "res05", "type": "restricted", "role": "employee", "question": "In which month do salary reviews take place?", "gold": ["April"], "split": "test"}
+{"id": "res06", "type": "restricted", "role": "employee", "question": "By which working day is the month-end close completed?", "gold": ["5th working day"], "split": "dev"}
+{"id": "res07", "type": "restricted", "role": "employee", "question": "Journal entries above what amount need a second approver?", "gold": ["25,000 dollars"], "split": "test"}
+{"id": "res08", "type": "restricted", "role": "employee", "question": "How many working days does the quarter-end close take?", "gold": ["8 working days"], "split": "dev"}
+{"id": "ans29", "type": "answerable", "role": "employee", "question": "Within how many days must a grievance be raised in writing?", "gold": ["60 days"], "split": "test"}
+{"id": "ans30", "type": "answerable", "role": "employee", "question": "Within how many working days does HR respond to a grievance?", "gold": ["10 working days"], "split": "test"}
+{"id": "ans31", "type": "answerable", "role": "employee", "question": "Within how many days can an employee appeal a grievance outcome?", "gold": ["14 days"], "split": "dev"}
+{"id": "ans32", "type": "answerable", "role": "employee", "question": "What value of gift or hospitality must be declared to a manager?", "gold": ["50 dollars"], "split": "test"}
+{"id": "ans33", "type": "answerable", "role": "employee", "question": "Within how many working days must a conflict of interest be declared?", "gold": ["5 working days"], "split": "dev"}
+{"id": "ans34", "type": "answerable", "role": "employee", "question": "How quickly is a whistleblowing report acknowledged?", "gold": ["24 hours"], "split": "test"}
+{"id": "ans35", "type": "answerable", "role": "employee", "question": "In which months do performance reviews take place?", "gold": ["June and December"], "split": "test"}
+{"id": "ans36", "type": "answerable", "role": "employee", "question": "What is the rating scale used in performance reviews?", "gold": ["1 to 5"], "split": "dev"}
+{"id": "ans37", "type": "answerable", "role": "employee", "question": "How long does a performance improvement plan last?", "gold": ["90 days"], "split": "test"}
+{"id": "ans38", "type": "answerable", "role": "employee", "question": "How many days before the review meeting is the self-assessment form due?", "gold": ["7 days"], "split": "dev"}
+{"id": "ans39", "type": "answerable", "role": "employee", "question": "Above what amount do purchases need three written quotes?", "gold": ["2,000 dollars"], "split": "test"}
+{"id": "ans40", "type": "answerable", "role": "employee", "question": "Above what amount does a purchase order need director sign-off?", "gold": ["10,000 dollars"], "split": "test"}
+{"id": "ans41", "type": "answerable", "role": "employee", "question": "What is the standard payment term for suppliers?", "gold": ["30 days"], "split": "dev"}
+{"id": "ans42", "type": "answerable", "role": "employee", "question": "At what time does the office open?", "gold": ["07:30"], "split": "test"}
+{"id": "ans43", "type": "answerable", "role": "employee", "question": "How far ahead can meeting rooms be booked?", "gold": ["14 days"], "split": "dev"}
+{"id": "ans44", "type": "answerable", "role": "employee", "question": "After how many minutes are unclaimed meeting room bookings released?", "gold": ["15 minutes"], "split": "test"}
+{"id": "ans45", "type": "answerable", "role": "employee", "question": "How long are system logs retained?", "gold": ["90 days"], "split": "test"}
+{"id": "ans46", "type": "answerable", "role": "employee", "question": "How long are backups kept?", "gold": ["35 days"], "split": "dev"}
+{"id": "ans47", "type": "answerable", "role": "employee", "question": "How soon is customer data deleted after a contract ends?", "gold": ["30 days"], "split": "test"}
+{"id": "ans48", "type": "answerable", "role": "employee", "question": "After how long is email in shared mailboxes archived?", "gold": ["2 years"], "split": "dev"}
+{"id": "ans49", "type": "answerable", "role": "hr", "question": "What does a promotion require in terms of ratings?", "gold": ["two consecutive ratings of 4 or higher"], "split": "test"}
+{"id": "ans50", "type": "answerable", "role": "finance", "question": "Above what foreign exchange exposure is hedging required?", "gold": ["500,000 dollars"], "split": "test"}
+{"id": "ans51", "type": "answerable", "role": "finance", "question": "Investments above what amount need Chief Financial Officer approval?", "gold": ["250,000 dollars"], "split": "dev"}
+{"id": "ans52", "type": "answerable", "role": "hr", "question": "How often does the promotion committee meet?", "gold": ["quarterly"], "split": "test"}
+{"id": "una15", "type": "unanswerable", "role": "employee", "question": "What is the notice period for resignation?", "gold": [], "split": "test"}
+{"id": "una16", "type": "unanswerable", "role": "employee", "question": "What is the overtime pay rate?", "gold": [], "split": "dev"}
+{"id": "una17", "type": "unanswerable", "role": "employee", "question": "How much is the employee referral bonus?", "gold": [], "split": "test"}
+{"id": "una18", "type": "unanswerable", "role": "employee", "question": "What is the pension contribution percentage?", "gold": [], "split": "dev"}
+{"id": "una19", "type": "unanswerable", "role": "employee", "question": "How many days of study leave are provided?", "gold": [], "split": "test"}
+{"id": "una20", "type": "unanswerable", "role": "employee", "question": "How long are CCTV recordings kept?", "gold": [], "split": "test"}
+{"id": "una21", "type": "unanswerable", "role": "employee", "question": "What is the penalty for paying a supplier late?", "gold": [], "split": "dev"}
+{"id": "una22", "type": "unanswerable", "role": "employee", "question": "What is the price of lunch in the cafeteria?", "gold": [], "split": "test"}
+{"id": "una23", "type": "unanswerable", "role": "employee", "question": "How many guests can one employee bring to the office per day?", "gold": [], "split": "dev"}
+{"id": "una24", "type": "unanswerable", "role": "employee", "question": "What is the monthly health insurance premium?", "gold": [], "split": "test"}
+{"id": "res9", "type": "restricted", "role": "employee", "question": "What share of employees can receive the top performance rating?", "gold": ["10 percent"], "split": "test"}
+{"id": "res10", "type": "restricted", "role": "employee", "question": "In which month are calibration meetings held?", "gold": ["January"], "split": "test"}
+{"id": "res11", "type": "restricted", "role": "employee", "question": "What is the daily cash movement limit?", "gold": ["2,000,000 dollars"], "split": "dev"}
+{"id": "res12", "type": "restricted", "role": "employee", "question": "Above what foreign exchange exposure is hedging required?", "gold": ["500,000 dollars"], "split": "test"}
+{"id": "res13", "type": "restricted", "role": "hr", "question": "Who must co-sign investments above 250,000 dollars?", "gold": ["second signatory"], "split": "dev"}

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VeritasRAG</title>
+<style>
+ body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#1a1a1a;line-height:1.5}
+ input,button{font:inherit;padding:.55rem .7rem;border:1px solid #bbb;border-radius:6px}
+ input{width:100%;box-sizing:border-box;margin:.25rem 0 .75rem} button{background:#1f4e79;color:#fff;border-color:#1f4e79;cursor:pointer}
+ .answer{background:#eef6ee;border:1px solid #bcd9bc;border-radius:8px;padding:.8rem 1rem;margin:1rem 0}
+ .none{background:#fdf3e7;border-color:#e5c79b} .cite{border-left:3px solid #1f4e79;padding:.1rem .8rem;margin:.6rem 0;font-size:.92rem}
+ small{color:#555}
+</style></head><body>
+<h1>VeritasRAG</h1>
+<p>Ask a question about the company documents. You only see answers from documents your role may read.</p>
+<label>API key<input id="key" type="password" autocomplete="off"></label>
+<label>Question<input id="q" placeholder="How many days of annual leave do I get?"></label>
+<button id="go">Ask</button>
+<div id="out"></div>
+<script>
+const $=id=>document.getElementById(id); try{$("key").value=sessionStorage.getItem("k")||""}catch(e){}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+async function ask(){
+  const out=$("out"); out.textContent="Searching…";
+  try{sessionStorage.setItem("k",$("key").value)}catch(e){}
+  const r=await fetch("/ask",{method:"POST",headers:{"Content-Type":"application/json","X-API-Key":$("key").value},body:JSON.stringify({query:$("q").value})});
+  if(r.status===401){out.textContent="That API key was not accepted.";return}
+  const d=await r.json();
+  if(d.abstained){out.innerHTML='<div class="answer none"><b>'+esc(d.message)+'</b><br><small>Reason: '+esc(d.reason)+'</small></div>';return}
+  out.innerHTML='<div class="answer"><b>'+esc(d.answer)+'</b></div><h3>Sources</h3>'+d.citations.map(c=>
+    '<div class="cite"><b>'+esc(c.title)+'</b>'+(c.section?' &rsaquo; '+esc(c.section):'')+' <small>(score '+c.score+')</small><br>'+esc(c.text)+'</div>').join("");
+}
+$("go").onclick=ask; $("q").addEventListener("keydown",e=>{if(e.key==="Enter")ask()});
+</script></body></html>

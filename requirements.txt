@@ -1,0 +1,12 @@
+rank_bm25
+numpy
+fastapi
+uvicorn
+httpx
+pydantic>=2
+# real models (not needed for the tests, which use stand-in models):
+sentence-transformers
+transformers
+torch
+accelerate
+# optional: pypdf for PDF documents; scikit-learn only for the mock backend in tests
