@@ -37,17 +37,21 @@ st.write("Ask a question about a **made-up company's** documents. You only get a
 who = st.selectbox("Sign in as", list(PERSONAS) + [STAFF])
 user, roles = who, PERSONAS.get(who, ["employee"])
 if who == STAFF:
-    uname = st.text_input("Username"); pw = st.text_input("Password", type="password")
+    uname = st.text_input("Username").strip(); pw = st.text_input("Password", type="password")
+    st.caption(f"{len(accounts())} staff account(s) configured on this deployment.")
     user, roles = None, ["employee"]
     if uname and pw:
         acc, now = accounts().get(uname), time.time()
         recent = [t for t in S["fails"].get(uname, []) if now - t < LOCK_SECONDS]
+        attempt = (uname, pw)
         if len(recent) >= MAX_FAILS: st.error("Too many failed attempts. Try again in a few minutes.")
-        elif acc and check_password(pw, acc.get("password", "")):
+        elif acc and check_password(pw, acc.get("password", "").strip()):
             user, roles = uname, ["employee"] + [r for r in acc.get("roles", "").split("|") if r and r != "employee"]
         else:
-            S["fails"][uname] = recent + [now]; audit.append(uname, [], "login_failed")
+            if st.session_state.get("last_attempt") != attempt:      # count each new attempt once, not every page refresh
+                S["fails"][uname] = recent + [now]; audit.append(uname, [], "login_failed")
             st.error("Wrong username or password." if accounts() else "Staff sign-in is not set up on this deployment.")
+        st.session_state["last_attempt"] = attempt
 can_submit = bool({"uploader", "admin"} & set(roles)) and user is not None and who == STAFF
 is_admin = "admin" in roles and user is not None and who == STAFF
 if user and who == STAFF: st.success(f"Signed in as **{user}** (roles: {', '.join(roles)})")
