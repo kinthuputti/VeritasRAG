@@ -128,10 +128,12 @@ def create_app(engine, users, audit_path="audit_log.jsonl", docs_dir=None, limit
     return app
 
 def _default_app():
-    """Used by `uvicorn veritasrag.api:app`. Set VERITASRAG_BACKEND=mock to run without model downloads."""
-    from .models import MockBackend, RealBackend
+    """Used by `uvicorn veritasrag.api:app`. VERITASRAG_BACKEND=real (default, PyTorch), onnx (small, no PyTorch) or mock (tests)."""
+    from .models import MockBackend, OnnxBackend, RealBackend
     docs = os.environ.get("VERITASRAG_DOCS", "docs")
-    backend = MockBackend() if os.environ.get("VERITASRAG_BACKEND") == "mock" else RealBackend(generator=os.environ.get("VERITASRAG_GENERATOR", "extractive"))
+    kind = os.environ.get("VERITASRAG_BACKEND", "real")
+    backend = (MockBackend() if kind == "mock" else OnnxBackend() if kind == "onnx"
+               else RealBackend(generator=os.environ.get("VERITASRAG_GENERATOR", "extractive")))
     raw = os.environ.get("VERITASRAG_TOKENS") or "demo-employee-0001:alice:employee,demo-hr-user-0001:bob:employee|hr,demo-admin-user-1:root:employee|hr|finance|admin"
     return create_app(Engine(backend, load_chunks(docs)), load_users(raw), docs_dir=docs)
 

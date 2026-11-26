@@ -14,6 +14,23 @@ def _extract(question, passages, min_overlap=2):
             if o > bs: best, bs = s, o
     return best if best and bs >= min_overlap else "UNANSWERABLE"
 
+class OnnxBackend:
+    """Same two models as RealBackend (bge-small-en-v1.5 and ms-marco-MiniLM-L-6-v2) run through ONNX, with no PyTorch.
+    Small enough for a 512 MB free host. Answers are extractive (best-matching sentence)."""
+    name = "onnx"; stateless = True
+    def __init__(self, embedder="BAAI/bge-small-en-v1.5", reranker="Xenova/ms-marco-MiniLM-L-6-v2"):
+        from fastembed import TextEmbedding
+        from fastembed.rerank.cross_encoder import TextCrossEncoder
+        self.embedder, self.cross = TextEmbedding(embedder), TextCrossEncoder(reranker)
+    def fit(self, texts): pass
+    def embed(self, texts, query=False):
+        f = self.embedder.query_embed if query else self.embedder.embed
+        return np.array(list(f(list(texts))), dtype=np.float32)
+    def rerank(self, question, passages):
+        return [float(x) for x in self.cross.rerank(question, list(passages))]
+    def generate(self, question, passages):
+        return _extract(question, passages)
+
 class MockBackend:
     name = "mock"
     def fit(self, texts):
