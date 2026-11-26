@@ -11,3 +11,5 @@ torch
 accelerate
 # optional: pypdf for PDF documents; scikit-learn only for the mock backend in tests
 PyJWT[crypto]
+pypdf
+python-docx

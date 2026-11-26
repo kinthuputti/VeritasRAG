@@ -110,7 +110,8 @@ def create_app(engine, users, audit_path="audit_log.jsonl", docs_dir=None, limit
 
     class Doc(BaseModel):
         name: str
-        text: str
+        text: str = ""
+        content_base64: str = ""          # for .docx / .pdf: the file itself, base64-encoded (text is then ignored)
         access: str = "everyone"          # who may read it: "everyone" or a role name such as "hr"
 
     class Reason(BaseModel):
@@ -122,7 +123,15 @@ def create_app(engine, users, audit_path="audit_log.jsonl", docs_dir=None, limit
     @app.post("/documents")
     def submit_document(d: Doc, u=Depends(uploader)):
         """Submit a document and choose who may read it. With approval on (default) it waits until ANOTHER admin approves."""
-        try: item = flow.submit(d.name, d.text, d.access, u["user"])
+        try:
+            text = d.text
+            if d.content_base64:
+                import base64, binascii
+                from .extract import extract_text
+                try: data = base64.b64decode(d.content_base64, validate=True)
+                except (binascii.Error, ValueError): raise ValueError("content_base64 is not valid base64")
+                text = extract_text(d.name, data)
+            item = flow.submit(d.name, text, d.access, u["user"])
         except ValueError as e: raise HTTPException(400 if "too large" not in str(e) else 413, str(e))
         audit(u, "submit", d.name, access=item["access"], submission=item["id"], status=item["status"])
         return item

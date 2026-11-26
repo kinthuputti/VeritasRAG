@@ -268,6 +268,54 @@ class SourceSync(unittest.TestCase):
         self.assertEqual(c.post("/sync", headers={"X-API-Key": "emp-token-0001"}).status_code, 403)
         self.assertEqual(c.post("/sync", headers={"X-API-Key": "adm-token-0001"}).json()["added"], ["x.md"])
 
+def _docx_bytes():
+    import io
+    from docx import Document
+    d = Document(); d.add_heading("Pet Policy", 1); d.add_paragraph("One dog per floor is allowed on Fridays for visiting guests.")
+    d.add_heading("Aquariums", 2); d.add_paragraph("Fish tanks must be smaller than fifty litres on every desk.")
+    t = d.add_table(rows=1, cols=2); t.rows[0].cells[0].text = "Cats"; t.rows[0].cells[1].text = "Not allowed in the building at any time"
+    b = io.BytesIO(); d.save(b); return b.getvalue()
+
+def _pdf_bytes(text):
+    stream = f"BT /F1 12 Tf 72 720 Td ({text}) Tj ET".encode()
+    objs = [b"<< /Type /Catalog /Pages 2 0 R >>", b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+            b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+            b"<< /Length %d >>\nstream\n" % len(stream) + stream + b"\nendstream", b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"]
+    out, offs = b"%PDF-1.4\n", []
+    for i, o in enumerate(objs, 1): offs.append(len(out)); out += b"%d 0 obj\n" % i + o + b"\nendobj\n"
+    x = len(out); out += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objs) + 1) + b"".join(b"%010d 00000 n \n" % o for o in offs)
+    return out + b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF" % (len(objs) + 1, x)
+
+class FileTypes(unittest.TestCase):
+    def test_docx_headings_become_sections_and_tables_are_read(self):
+        from veritasrag.extract import extract_text
+        t = extract_text("pets.docx", _docx_bytes())
+        self.assertIn("## Pet Policy", t); self.assertIn("## Aquariums", t); self.assertIn("Cats | Not allowed in the building at any time", t)
+    def test_pdf_text_layer(self):
+        from veritasrag.extract import extract_text
+        self.assertIn("Visitors must sign the register", extract_text("v.pdf", _pdf_bytes("Visitors must sign the register at the front desk daily")))
+    def test_unreadable_files_are_refused_clearly(self):
+        from veritasrag.extract import extract_text
+        for name, data in (("scan.pdf", _pdf_bytes("")), ("bad.docx", b"not a zip"), ("bad.pdf", b"not a pdf"), ("a.exe", b"xxxxxxxxxx")):
+            with self.assertRaises(ValueError, msg=name): extract_text(name, data)
+        with self.assertRaises(ValueError): extract_text("big.txt", b"x" * 5_000_001)
+    def test_api_upload_word_and_pdf_then_search(self):
+        import base64
+        from fastapi.testclient import TestClient
+        d = tempfile.mkdtemp()
+        c = TestClient(create_app(make(), load_users("adm-token-0001:root:employee|admin,adm-token-0002:two:employee|admin,emp-token-0001:amy:employee"),
+                                  audit_path=os.path.join(d, "a.jsonl"), docs_dir=d))
+        a1, a2 = {"X-API-Key": "adm-token-0001"}, {"X-API-Key": "adm-token-0002"}
+        for name, data, q in (("pets.docx", _docx_bytes(), "Are dogs allowed on Fridays?"),
+                              ("visitors.pdf", _pdf_bytes("Visitors must sign the register at the front desk daily"), "Where must visitors sign the register?")):
+            sub = c.post("/documents", json={"name": name, "content_base64": base64.b64encode(data).decode(), "access": "everyone"}, headers=a1)
+            self.assertEqual(sub.status_code, 200, sub.text)
+            self.assertEqual(c.post(f"/documents/pending/{sub.json()['id']}/approve", headers=a2).status_code, 200)
+            r = c.post("/search", json={"query": q}, headers={"X-API-Key": "emp-token-0001"}).json()
+            self.assertEqual(r[0]["doc"], name)
+            self.assertTrue(os.path.exists(os.path.join(d, name + ".txt")))
+        self.assertEqual(c.post("/documents", json={"name": "x.docx", "content_base64": "###", "access": "everyone"}, headers=a1).status_code, 400)
+
 class Questions(unittest.TestCase):
     def test_size_split_and_balance(self):
         self.assertGreaterEqual(len(QS), 80)

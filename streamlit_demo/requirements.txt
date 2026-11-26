@@ -3,3 +3,5 @@ numpy
 pydantic>=2
 fastembed
 streamlit
+pypdf
+python-docx

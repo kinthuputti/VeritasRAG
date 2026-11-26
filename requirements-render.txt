@@ -5,3 +5,5 @@ uvicorn
 pydantic>=2
 fastembed
 PyJWT[crypto]
+pypdf
+python-docx

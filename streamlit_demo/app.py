@@ -10,6 +10,7 @@ import streamlit as st
 from veritasrag import Engine, load_chunks
 from veritasrag.audit import AuditLog
 from veritasrag.auth import check_password
+from veritasrag.extract import extract_text
 from veritasrag.workflow import Workflow
 
 st.set_page_config(page_title="VeritasRAG", page_icon="🔎", layout="centered")
@@ -58,11 +59,11 @@ if user and who == STAFF: st.success(f"Signed in as **{user}** (roles: {', '.joi
 
 if can_submit:
     with st.expander("Add a document", expanded=True):
-        up = st.file_uploader("Upload a .txt or .md file", type=["txt", "md"])
+        up = st.file_uploader("Upload a Word, PDF, .txt or .md file", type=["docx", "pdf", "txt", "md"])
         level = st.selectbox("Who may read it?", ["everyone", "hr", "finance"], help="Only people with this role will ever see answers or sources from it.")
         if up is not None and st.button("Submit for approval"):
             try:
-                it = flow.submit(up.name, up.getvalue().decode("utf-8", errors="ignore"), level, user, max_bytes=200_000)
+                it = flow.submit(up.name, extract_text(up.name, up.getvalue()), level, user, max_bytes=500_000)
                 audit.append(user, roles, "submit", up.name, access=it["access"], submission=it["id"])
                 st.success(f"Submitted. It becomes searchable after a different admin approves it (submission #{it['id']}).")
             except ValueError as e: st.error(str(e))

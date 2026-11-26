@@ -4,7 +4,7 @@ import os, re, threading, time
 from .ingest import _front_matter
 
 ACCESS = re.compile(r"[a-z0-9_-]{1,30}")
-NAME = re.compile(r"[\w.\- ]{1,100}\.(md|txt)")
+NAME = re.compile(r"[\w.\- ]{1,100}\.(md|txt|docx|pdf)")
 
 class Workflow:
     def __init__(self, engine, docs_dir=None, require_approval=True):
@@ -13,7 +13,7 @@ class Workflow:
 
     def submit(self, name, text, access, user, max_bytes=500_000):
         access = "all" if access in ("everyone", "all") else access.lower()
-        if not NAME.fullmatch(name) or ".." in name: raise ValueError("name must be like policy.md or notes.txt")
+        if not NAME.fullmatch(name) or ".." in name: raise ValueError("name must be like policy.md, notes.txt, policy.docx or policy.pdf")
         if not ACCESS.fullmatch(access): raise ValueError("access must be 'everyone' or a role name such as hr")
         if len(text) > max_bytes: raise ValueError("document too large")
         with self._lock:
@@ -29,8 +29,9 @@ class Workflow:
         with self._lock:
             chunks = self.engine.add_document(it["name"], raw)
             it.update(status="approved", decided_by=approver)
-            if self.docs_dir:
-                with open(os.path.join(self.docs_dir, it["name"]), "w", encoding="utf-8") as fh: fh.write(raw)
+            if self.docs_dir:      # the extracted text is what gets stored, so Word and PDF files are kept as text next to the others
+                stored = it["name"] if it["name"].endswith((".md", ".txt")) else it["name"] + ".txt"
+                with open(os.path.join(self.docs_dir, stored), "w", encoding="utf-8") as fh: fh.write(raw)
         return chunks
 
     def approve(self, item_id, approver):
