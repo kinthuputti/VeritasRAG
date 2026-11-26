@@ -149,20 +149,124 @@ class Security(unittest.TestCase):
         for _ in range(3): self.assertEqual(c.post("/search", json={"query": "x"}, headers={"X-API-Key": "bad-bad-bad-bad"}).status_code, 401)
         self.assertEqual(c.post("/search", json={"query": "x"}, headers={"X-API-Key": "emp-token-0001"}).status_code, 429)  # even the right key is locked out
     def test_upload_needs_admin_and_validates(self):
-        c = self.client("emp-token-0001:amy:employee,adm-token-0001:root:employee|admin")
+        c = self.client("emp-token-0001:amy:employee,adm-token-0001:root:employee|admin,adm-token-0002:two:employee|admin", )
         doc = {"name": "pets.md", "text": Upload.NEW}
         self.assertEqual(c.post("/documents", json=doc, headers={"X-API-Key": "emp-token-0001"}).status_code, 403)
         for bad in ("../evil.md", "a.exe", "x/y.md"):
             self.assertEqual(c.post("/documents", json={"name": bad, "text": "x"}, headers={"X-API-Key": "adm-token-0001"}).status_code, 400)
-        a = {"X-API-Key": "adm-token-0001"}
-        self.assertEqual(c.post("/documents", json=doc, headers=a).status_code, 200)
+        self.assertEqual(c.post("/documents", json={**doc, "access": "HR TEAM!"}, headers={"X-API-Key": "adm-token-0001"}).status_code, 400)
+        a1, a2 = {"X-API-Key": "adm-token-0001"}, {"X-API-Key": "adm-token-0002"}
+        sub = c.post("/documents", json=doc, headers=a1).json(); self.assertEqual(sub["status"], "pending")
+        ask = lambda: c.post("/ask", json={"query": "Are dogs allowed on Fridays?"}, headers={"X-API-Key": "emp-token-0001"}).json()
+        self.assertTrue(ask()["abstained"] or all(x["doc"] != "pets.md" for x in ask()["citations"]))   # not searchable while pending
+        self.assertEqual(c.post(f"/documents/pending/{sub['id']}/approve", headers=a1).status_code, 403)  # cannot approve your own upload
+        self.assertEqual(c.post(f"/documents/pending/{sub['id']}/approve", headers=a2).status_code, 200)
         self.assertTrue(os.path.exists(os.path.join(self.docs, "pets.md")))
-        r = c.post("/ask", json={"query": "Are dogs allowed on Fridays?"}, headers={"X-API-Key": "emp-token-0001"}).json()
-        self.assertFalse(r["abstained"])
-        self.assertIn("pets.md", [d["doc"] for d in c.get("/documents", headers=a).json()])
-        self.assertEqual(c.delete("/documents/pets.md", headers=a).status_code, 200)
+        self.assertIn("pets.md", [x["doc"] for x in ask()["citations"]])
+        self.assertEqual(c.post(f"/documents/pending/{sub['id']}/approve", headers=a2).status_code, 409)
+        self.assertIn("pets.md", [d["doc"] for d in c.get("/documents", headers=a1).json()])
+        self.assertEqual(c.delete("/documents/pets.md", headers=a1).status_code, 200)
         self.assertFalse(os.path.exists(os.path.join(self.docs, "pets.md")))
-        self.assertEqual(c.delete("/documents/pets.md", headers=a).status_code, 404)
+        self.assertEqual(c.delete("/documents/pets.md", headers=a1).status_code, 404)
+    def test_uploader_role_and_reject(self):
+        c = self.client("up-token-00001:ulla:employee|uploader,adm-token-0001:root:employee|admin")
+        up, ad = {"X-API-Key": "up-token-00001"}, {"X-API-Key": "adm-token-0001"}
+        sub = c.post("/documents", json={"name": "a.md", "text": "x"}, headers=up).json()
+        self.assertEqual(c.get("/documents/pending", headers=up).status_code, 403)       # uploaders cannot see or decide the queue
+        self.assertEqual(c.post(f"/documents/pending/{sub['id']}/reject", json={"reason": "not accurate"}, headers=ad).json()["status"], "rejected")
+        self.assertEqual(c.get("/documents/pending", headers=ad).json(), [])
+    def test_submitters_access_choice_beats_text_inside_file(self):
+        c = self.client("adm-token-0001:root:employee|admin,adm-token-0002:two:employee|admin,emp-token-0001:amy:employee")
+        a1, a2 = {"X-API-Key": "adm-token-0001"}, {"X-API-Key": "adm-token-0002"}
+        sneaky = "---\naccess: all\n---\n## Bonus\nThe quokka bonus is 99 dollars."
+        sub = c.post("/documents", json={"name": "q.md", "text": sneaky, "access": "hr"}, headers=a1).json()
+        c.post(f"/documents/pending/{sub['id']}/approve", headers=a2)
+        r = c.post("/search", json={"query": "quokka bonus"}, headers={"X-API-Key": "emp-token-0001"}).json()
+        self.assertNotIn("q.md", [x["doc"] for x in r])
+    def test_audit_chain_detects_tampering(self):
+        from veritasrag.audit import AuditLog
+        path = os.path.join(tempfile.mkdtemp(), "a.jsonl"); lg = AuditLog(path)
+        for i in range(4): lg.append("amy", ["employee"], "ask", f"q{i}")
+        self.assertEqual(lg.verify(), (True, 4))
+        rows = open(path).read().splitlines(); rows[1] = rows[1].replace("q1", "q9")
+        open(path, "w").write("\n".join(rows) + "\n"); self.assertEqual(lg.verify(), (False, 2))
+        open(path, "w").write("\n".join([rows[0], rows[2], rows[3]]) + "\n"); self.assertFalse(lg.verify()[0])   # deleting a line
+    def test_audit_verify_endpoint_and_actor(self):
+        c = self.client("adm-token-0001:root:employee|admin")
+        c.post("/search", json={"query": "leave"}, headers={"X-API-Key": "adm-token-0001"})
+        self.assertEqual(c.get("/audit/verify", headers={"X-API-Key": "adm-token-0001"}).json(), dict(intact=True, lines=1))
+
+class Identity(unittest.TestCase):
+    def test_password_hash(self):
+        from veritasrag.auth import hash_password, check_password
+        h = hash_password("correct horse"); self.assertTrue(check_password("correct horse", h)); self.assertFalse(check_password("wrong", h))
+        self.assertNotEqual(h, hash_password("correct horse"))                 # salted
+    def _client(self, verifier):
+        from fastapi.testclient import TestClient
+        d = tempfile.mkdtemp()
+        return TestClient(create_app(make(), {}, audit_path=os.path.join(d, "a.jsonl"), verifier=verifier))
+    def test_hs256_token_groups_become_roles(self):
+        import jwt, time as t
+        from veritasrag.auth import JwtVerifier, parse_group_map
+        v = JwtVerifier(secret="s" * 32, audience="veritasrag", group_map=parse_group_map("hr-team=hr;it=admin|uploader"))
+        c = self._client(v); mk = lambda **k: jwt.encode(dict(email="pat@corp.example", aud="veritasrag", exp=t.time() + 600, **k), "s" * 32, algorithm="HS256")
+        q = {"query": "What is the salary range for band L4?"}
+        emp = c.post("/search", json=q, headers={"Authorization": "Bearer " + mk(groups=[])}).json()
+        hr = c.post("/search", json=q, headers={"Authorization": "Bearer " + mk(groups=["hr-team"])}).json()
+        self.assertNotIn("salary_bands.md", [x["doc"] for x in emp]); self.assertIn("salary_bands.md", [x["doc"] for x in hr])
+        self.assertEqual(c.get("/documents", headers={"Authorization": "Bearer " + mk(groups=["hr-team"])}).status_code, 403)
+        self.assertEqual(c.get("/documents", headers={"Authorization": "Bearer " + mk(groups=["it"])}).status_code, 200)
+    def test_bad_tokens_rejected(self):
+        import jwt, time as t
+        from veritasrag.auth import JwtVerifier
+        v = JwtVerifier(secret="s" * 32, audience="veritasrag"); c = self._client(v)
+        good = dict(email="a@b.c", aud="veritasrag", exp=t.time() + 600)
+        bad = [jwt.encode({**good, "exp": t.time() - 60}, "s" * 32, algorithm="HS256"),          # expired
+               jwt.encode(good, "x" * 32, algorithm="HS256"),                                    # wrong key
+               jwt.encode({**good, "aud": "other"}, "s" * 32, algorithm="HS256"),                # wrong audience
+               jwt.encode({k: x for k, x in good.items() if k != "exp"}, "s" * 32, algorithm="HS256"),  # no expiry
+               "not.a.token", jwt.encode(good, None, algorithm="none")]                          # unsigned
+        for tok_ in bad:      # a fresh client each time, so the failed-sign-in lockout does not interfere
+            self.assertEqual(self._client(v).post("/search", json={"query": "x"}, headers={"Authorization": "Bearer " + tok_}).status_code, 401, tok_[:20])
+        c2 = self._client(v)
+        for tok_ in bad[:5]: c2.post("/search", json={"query": "x"}, headers={"Authorization": "Bearer " + tok_})
+        good_tok = jwt.encode(good, "s" * 32, algorithm="HS256")
+        self.assertEqual(c2.post("/search", json={"query": "x"}, headers={"Authorization": "Bearer " + good_tok}).status_code, 429)   # locked out
+    def test_rs256_token(self):
+        import jwt, time as t
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from cryptography.hazmat.primitives import serialization as ser
+        from veritasrag.auth import JwtVerifier
+        k = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        pub = k.public_key().public_bytes(ser.Encoding.PEM, ser.PublicFormat.SubjectPublicKeyInfo).decode()
+        c = self._client(JwtVerifier(public_key=pub, issuer="https://idp.example"))
+        tok_ = jwt.encode(dict(email="a@b.c", iss="https://idp.example", exp=t.time() + 600), k, algorithm="RS256")
+        self.assertEqual(c.post("/search", json={"query": "leave"}, headers={"Authorization": "Bearer " + tok_}).status_code, 200)
+        self.assertEqual(c.post("/search", json={"query": "leave"}, headers={"Authorization": "Bearer " + jwt.encode(dict(email="a", iss="evil", exp=t.time() + 600), k, algorithm="RS256")}).status_code, 401)
+
+class SourceSync(unittest.TestCase):
+    def test_sync_follows_source_and_permissions(self):
+        from veritasrag.connectors import FolderConnector, Sync
+        d = tempfile.mkdtemp(); w = lambda n, t: open(os.path.join(d, n), "w").write(t)
+        w("pets.md", "## Pets\nOne dog per floor is allowed on Fridays."); w("acl.json", "{}")
+        e = make(); sy = Sync(e); conn = FolderConnector(d)
+        self.assertEqual(sy.run(conn)["added"], ["pets.md"])
+        vis = lambda roles: "pets.md" in [h.chunk.doc for h in e.search("dogs Fridays", roles, "hybrid", 5)]
+        self.assertTrue(vis(["employee"]))
+        self.assertEqual(sy.run(conn)["unchanged"], ["pets.md"])
+        w("acl.json", '{"pets.md": "hr"}')                       # permission changed at the source
+        self.assertEqual(sy.run(conn)["updated"], ["pets.md"]); self.assertFalse(vis(["employee"])); self.assertTrue(vis(["employee", "hr"]))
+        os.remove(os.path.join(d, "pets.md"))                    # document removed at the source
+        self.assertEqual(sy.run(conn)["removed"], ["pets.md"]); self.assertFalse(vis(["employee", "hr"]))
+        self.assertGreaterEqual(len({c.doc for c in e.chunks}), 16)   # the original documents are untouched
+    def test_sync_endpoint_admin_only(self):
+        from fastapi.testclient import TestClient
+        from veritasrag.connectors import FolderConnector
+        d = tempfile.mkdtemp(); open(os.path.join(d, "x.md"), "w").write("## X\nThe quokka bonus is 99 dollars.")
+        c = TestClient(create_app(make(), load_users("emp-token-0001:amy:employee,adm-token-0001:root:employee|admin"),
+                                  audit_path=os.path.join(d, "..", "au.jsonl"), source=FolderConnector(d)))
+        self.assertEqual(c.post("/sync", headers={"X-API-Key": "emp-token-0001"}).status_code, 403)
+        self.assertEqual(c.post("/sync", headers={"X-API-Key": "adm-token-0001"}).json()["added"], ["x.md"])
 
 class Questions(unittest.TestCase):
     def test_size_split_and_balance(self):

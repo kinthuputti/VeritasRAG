@@ -1,0 +1,7 @@
+rank_bm25
+numpy
+fastapi
+uvicorn
+pydantic>=2
+fastembed
+PyJWT[crypto]

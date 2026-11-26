@@ -15,7 +15,7 @@ VeritasRAG is a search engine for company documents. You ask a question, it answ
 | API and web page | `/search`, `/ask`, `/audit`, admin document upload/delete, hashed API keys with roles, expiry, rate limit and lockout, a small browser page | `veritasrag/api.py`, `veritasrag/web/` |
 | Audit log | Every search and question is logged with user, role, sources and whether it was answered | `audit_log.jsonl` |
 | Evaluation harness | Compares five configurations with bootstrap confidence intervals, on SQuAD 2.0 and on the company documents | notebook + `eval/` |
-| Tests | 26 tests, including a check that restricted text never reaches a user without the role | `tests/` |
+| Tests | 36 tests, including a check that restricted text never reaches a user without the role | `tests/` |
 
 The sample documents in `docs/` are made up (a fictional company). Four of the 16 documents are restricted: `salary_bands.md` and `performance_calibration.md` (HR), `finance_close_calendar.md` and `treasury_limits.md` (Finance).
 
@@ -96,13 +96,30 @@ The filler text is generated, so this only measures speed, not answer quality.
 
 Building the first index took 9.0 s; adding one document and re-indexing took 0.3 s; peak memory was 1,566 MB.
 
-## Operating it
+## Access control and operations
 
-- **Upload / delete documents (admin role):** `POST /documents` with `{"name": "policy.md", "text": "..."}`, `DELETE /documents/policy.md`, `GET /documents`. New files are searchable straight away. Only the new text gets embedded; the per-role indexes are rebuilt on the next query.
-- **Keys:** `token:user:roles[:expiry]`. A token can be given as `sha256$<hex digest>` so the plain secret never sits in the configuration. Only hashes are kept in memory. Keys can carry an expiry date (`YYYY-MM-DD`).
-- **Abuse limits:** 60 requests per minute per user (`VERITASRAG_RATE`, answers `429` with `Retry-After`); 5 failed sign-ins from one client lock that client out for 5 minutes.
+How a company would run this, and which parts are built here:
+
+| Practice | Status | Where |
+|---|---|---|
+| Role-restricted search, enforced before ranking | Built, tested (0 leaks) | `veritasrag/engine.py` |
+| Sign-in with an identity provider's token (OIDC/JWT: signature, expiry, issuer and audience checked), groups mapped to roles | Built, tested with locally signed tokens | `veritasrag/auth.py` |
+| API keys (stored as hashes, with expiry), per-user rate limit, lockout after failed sign-ins | Built, tested | `veritasrag/api.py` |
+| Named staff accounts with salted password hashes (demo app) | Built | `streamlit_demo/app.py` |
+| Upload by an admin or uploader, who chooses who may read the file; it stays unsearchable until a **different** admin approves (four-eyes rule); the uploader's access choice overrides any `access:` line inside the file | Built, tested | `veritasrag/workflow.py` |
+| Tamper-evident audit log (each line holds the hash of the previous one; `GET /audit/verify`) | Built, tested | `veritasrag/audit.py` |
+| Keep the index in step with a source of documents and their permissions (add, change, permission change, delete) | Built for a folder with an `acl.json` file, tested; `POST /sync` | `veritasrag/connectors.py` |
+| Two-factor login | Provided by the identity provider (Google, Entra ID, Okta); this app only accepts the token | not built here |
+| SharePoint, Google Drive or Confluence connectors | Not built; they would implement the same one-method connector interface | n/a |
+| Encryption at rest, independent security audit | Not done | n/a |
+
+Configuration is by environment variables: `VERITASRAG_TOKENS` (`token:user:roles[:expiry]`, token may be `sha256$<hex>`), `VERITASRAG_JWT_SECRET` / `VERITASRAG_JWT_PUBLIC_KEY` / `VERITASRAG_JWKS_URL` with `VERITASRAG_JWT_AUDIENCE`, `VERITASRAG_JWT_ISSUER` and `VERITASRAG_GROUP_MAP` (`hr-team=hr;it-admins=admin|uploader`), `VERITASRAG_REQUIRE_APPROVAL` (default on), `VERITASRAG_SOURCE` (folder to sync), `VERITASRAG_RATE` (requests per minute, default 60).
+
+Document endpoints: `POST /documents` (uploader or admin; body `name`, `text`, `access`), `GET /documents/pending`, `POST /documents/pending/{id}/approve` or `/reject` (admin, not the submitter), `GET /documents`, `DELETE /documents/{name}`, `POST /sync`, `GET /audit`, `GET /audit/verify`.
 
 ## Limitations
 - With guards, the hallucination rate on SQuAD 2.0 (Wikipedia text, 1.5B generator) is still 0.46. The guards cut it from 0.81 but don't remove it.
 - Accuracy comes from an automatic score (token-F1 ≥ 0.5), not from human judges.
-- Authentication is API keys with roles, hashed in memory, with expiry, rate limiting and lockout. There are no user accounts or passwords, and files aren't encrypted at rest. Nobody outside the project has audited the access control or the API for security.
+- The sign-in parts are tested with locally generated tokens, not against a live identity provider. The demo's Alice/Bob/Carol drop-down is not real authentication.
+- Nobody outside the project has audited the access control or the API for security, and files are not encrypted at rest.
+- Documents uploaded to the live demo are kept in memory and are lost when it restarts.
