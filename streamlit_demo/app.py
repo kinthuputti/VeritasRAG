@@ -93,12 +93,15 @@ if is_admin:
 elif who != STAFF:
     st.caption("Try: *How many days of annual leave do I get?* Then *What is the salary range for band L4?* as Alice (no answer) and as Bob (answered from the HR-only file).")
 
+docs_ok = [d["doc"] for d in eng.readable_documents(roles)]
+scope = st.selectbox("Search in", ["All documents"] + docs_ok, help="Pick one document to ask about it only, for example its title or what it covers.")
 q = st.text_input("Your question", placeholder="How many days of annual leave does a full-time employee get?")
 if q:
-    r = eng.ask(q, roles)
+    r = eng.ask(q, roles, doc=None if scope == "All documents" else scope)
     audit.append(user or who, roles, "ask", q, answered=not r["abstained"], reason=r["reason"], sources=[c["doc"] for c in r["citations"]])
     if r["abstained"]:
-        st.warning("No answer found in the documents you can access."); st.caption(f"Reason: {r['reason']}")
+        if r["reason"] == "needs_document": st.info("Which document? Pick it in **Search in** above, then ask again.")
+        else: st.warning("No answer found in the documents you can access."); st.caption(f"Reason: {r['reason']}")
     else:
         st.success(r["answer"])
         for c in r["citations"][:3]:

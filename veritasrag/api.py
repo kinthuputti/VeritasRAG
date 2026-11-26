@@ -17,6 +17,7 @@ from .connectors import Sync
 class Query(BaseModel):
     query: str
     top_k: int = 5
+    document: str | None = None      # optional: ask about one document only (it must be one you may read)
 
 def hash_token(token):
     return hashlib.sha256(token.encode()).hexdigest()
@@ -92,15 +93,18 @@ def create_app(engine, users, audit_path="audit_log.jsonl", docs_dir=None, limit
     @app.get("/health")
     def health(): return {"status": "ok", "chunks": len(engine.chunks)}
 
+    @app.get("/my-documents")
+    def my_documents(u=Depends(current_user)): return engine.readable_documents(u["roles"])
+
     @app.post("/search")
     def search(q: Query, u=Depends(current_user)):
-        hits = engine.search(q.query, u["roles"], top_k=q.top_k)
+        hits = engine.search(q.query, u["roles"], top_k=q.top_k, doc=q.document)
         audit(u, "search", q.query, sources=[h.chunk.doc for h in hits])
         return [dict(doc=h.chunk.doc, title=h.chunk.title, section=h.chunk.section, score=round(h.score, 3), text=h.chunk.text) for h in hits]
 
     @app.post("/ask")
     def ask(q: Query, u=Depends(current_user)):
-        r = engine.ask(q.query, u["roles"])
+        r = engine.ask(q.query, u["roles"], doc=q.document)
         audit(u, "ask", q.query, answered=not r["abstained"], reason=r["reason"], sources=[c["doc"] for c in r["citations"]])
         if r["abstained"]: r["message"] = NO_ANSWER
         return r

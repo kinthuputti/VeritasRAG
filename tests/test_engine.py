@@ -316,6 +316,41 @@ class FileTypes(unittest.TestCase):
             self.assertTrue(os.path.exists(os.path.join(d, name + ".txt")))
         self.assertEqual(c.post("/documents", json={"name": "x.docx", "content_base64": "###", "access": "everyone"}, headers=a1).status_code, 400)
 
+class DocumentQuestions(unittest.TestCase):
+    def test_title_and_about_come_from_the_real_document(self):
+        e = make()
+        r = e.ask("What is the title of this document?", ["employee"], doc="leave_policy.md")
+        self.assertFalse(r["abstained"]); self.assertIn("Leave Policy", r["answer"]); self.assertIn("leave_policy.md", r["answer"])
+        r = e.ask("What is this document about?", ["employee"], doc="leave_policy.md")
+        self.assertIn("begins", r["answer"]); self.assertIn("annual leave", r["answer"].lower())
+        r = e.ask("What is the name of the travel policy document?", ["employee"])
+        self.assertIn("Travel", r["answer"])
+    def test_this_document_without_choosing_asks_which(self):
+        r = make().ask("What is the title of this document?", ["employee"])
+        self.assertTrue(r["abstained"]); self.assertEqual(r["reason"], "needs_document")
+    def test_cannot_open_a_document_you_may_not_read(self):
+        e = make()
+        for q in ("What is the title of this document?", "What is the salary range for band L4?"):
+            r = e.ask(q, ["employee"], doc="salary_bands.md"); self.assertTrue(r["abstained"]); self.assertEqual(r["citations"], [])
+        self.assertNotIn("salary_bands.md", [d["doc"] for d in e.readable_documents(["employee"])])
+        self.assertIn("salary_bands.md", [d["doc"] for d in e.readable_documents(["employee", "hr"])])
+        self.assertIn("Salary", e.ask("What is the title of this document?", ["employee", "hr"], doc="salary_bands.md")["answer"])
+    def test_scoped_question_only_uses_that_document(self):
+        e = make(); hits = e.search("days", ["employee"], "hybrid", 5, doc="leave_policy.md")
+        self.assertTrue(hits and all(h.chunk.doc == "leave_policy.md" for h in hits))
+    def test_normal_questions_are_not_mistaken_for_title_questions(self):
+        e = make()
+        for q in ("What is the daily meal allowance during business travel?", "Who must approve expenses above 5,000 dollars?", "Who is the CEO of the company?"):
+            self.assertNotIn("is titled", e.ask(q, ["employee"])["answer"] or "")
+    def test_api_my_documents_and_document_scope(self):
+        from fastapi.testclient import TestClient
+        d = tempfile.mkdtemp()
+        c = TestClient(create_app(make(), load_users("emp-token-0001:amy:employee"), audit_path=os.path.join(d, "a.jsonl")))
+        h = {"X-API-Key": "emp-token-0001"}
+        self.assertNotIn("salary_bands.md", [x["doc"] for x in c.get("/my-documents", headers=h).json()])
+        r = c.post("/ask", json={"query": "What is the title of this document?", "document": "leave_policy.md"}, headers=h).json()
+        self.assertIn("Leave Policy", r["answer"])
+
 class Questions(unittest.TestCase):
     def test_size_split_and_balance(self):
         self.assertGreaterEqual(len(QS), 80)
