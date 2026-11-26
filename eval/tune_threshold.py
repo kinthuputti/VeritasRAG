@@ -34,7 +34,7 @@ def main():
         ok, hall = [], []
         for q, s, r in rows:
             answered = s >= t and not r["abstained"]
-            if q["type"] == "answerable": ok.append(answered and f1(r["answer"], q["gold"]) >= 0.5)
+            if q["type"] in ("answerable", "paraphrase"): ok.append(answered and f1(r["answer"], q["gold"]) >= 0.5)
             else:
                 ok.append(not answered)
                 if q["type"] == "unanswerable": hall.append(answered)

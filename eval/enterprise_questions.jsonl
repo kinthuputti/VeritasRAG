@@ -87,3 +87,34 @@
 {"id": "res11", "type": "restricted", "role": "employee", "question": "What is the daily cash movement limit?", "gold": ["2,000,000 dollars"], "split": "dev"}
 {"id": "res12", "type": "restricted", "role": "employee", "question": "Above what foreign exchange exposure is hedging required?", "gold": ["500,000 dollars"], "split": "test"}
 {"id": "res13", "type": "restricted", "role": "hr", "question": "Who must co-sign investments above 250,000 dollars?", "gold": ["second signatory"], "split": "dev"}
+{"id": "par01", "type": "paraphrase", "role": "employee", "question": "What is the yearly holiday entitlement for permanent full-time staff?", "gold": ["24 days"], "split": "dev"}
+{"id": "par02", "type": "paraphrase", "role": "employee", "question": "How much leave can roll over into the next year?", "gold": ["8 unused days"], "split": "test"}
+{"id": "par03", "type": "paraphrase", "role": "employee", "question": "By what date must leave rolled over from last year be used?", "gold": ["31 March"], "split": "dev"}
+{"id": "par04", "type": "paraphrase", "role": "employee", "question": "How many paid days off for illness does staff get?", "gold": ["10 days"], "split": "test"}
+{"id": "par05", "type": "paraphrase", "role": "employee", "question": "After how many days off sick do I need a doctor's note?", "gold": ["more than 3 consecutive days"], "split": "test"}
+{"id": "par06", "type": "paraphrase", "role": "employee", "question": "How much paid time off does the main carer of a new child get?", "gold": ["16 weeks"], "split": "dev"}
+{"id": "par07", "type": "paraphrase", "role": "employee", "question": "How early do I have to ask for time off?", "gold": ["at least 5 working days"], "split": "test"}
+{"id": "par08", "type": "paraphrase", "role": "employee", "question": "What is the deadline to claim back money I spent for work?", "gold": ["30 days"], "split": "dev"}
+{"id": "par09", "type": "paraphrase", "role": "employee", "question": "How much can I spend on food per day when I travel for work?", "gold": ["45 dollars"], "split": "test"}
+{"id": "par10", "type": "paraphrase", "role": "employee", "question": "Which executive must sign off very large spending of more than 5000 dollars?", "gold": ["Chief Financial Officer"], "split": "test"}
+{"id": "par11", "type": "paraphrase", "role": "employee", "question": "What is a line manager's spending authority?", "gold": ["500 dollars"], "split": "dev"}
+{"id": "par12", "type": "paraphrase", "role": "employee", "question": "On what date does the company pay back approved claims?", "gold": ["15th of the following month"], "split": "test"}
+{"id": "par13", "type": "paraphrase", "role": "employee", "question": "How long is the trial period for new hires?", "gold": ["3 months"], "split": "dev"}
+{"id": "par14", "type": "paraphrase", "role": "employee", "question": "How many days a week can staff work from home?", "gold": ["3 days per week"], "split": "test"}
+{"id": "par15", "type": "paraphrase", "role": "employee", "question": "Which weekdays is everybody required to come into the office?", "gold": ["Tuesdays and Thursdays"], "split": "test"}
+{"id": "par16", "type": "paraphrase", "role": "employee", "question": "What one-off sum do remote staff get to set up their workspace at home?", "gold": ["600 dollars"], "split": "dev"}
+{"id": "par17", "type": "paraphrase", "role": "employee", "question": "How many characters must a password have at least?", "gold": ["14 characters"], "split": "test"}
+{"id": "par18", "type": "paraphrase", "role": "employee", "question": "How frequently do I need to renew my password?", "gold": ["every 180 days"], "split": "dev"}
+{"id": "par19", "type": "paraphrase", "role": "employee", "question": "If I misplace my laptop, how soon must I tell security?", "gold": ["within 1 hour"], "split": "test"}
+{"id": "par20", "type": "paraphrase", "role": "employee", "question": "What is the maximum nightly rate for accommodation in big cities?", "gold": ["180 dollars per night"], "split": "test"}
+{"id": "par21", "type": "paraphrase", "role": "employee", "question": "When am I allowed to upgrade to a more comfortable flight class?", "gold": ["6 hours or longer"], "split": "dev"}
+{"id": "par22", "type": "paraphrase", "role": "employee", "question": "What daily amount is given for small extra costs on a trip?", "gold": ["30 dollars"], "split": "test"}
+{"id": "par23", "type": "paraphrase", "role": "employee", "question": "When is the welcome session for new joiners?", "gold": ["every Monday at 09:30"], "split": "dev"}
+{"id": "par24", "type": "paraphrase", "role": "employee", "question": "What is the time limit to finish the privacy training after joining?", "gold": ["30 days"], "split": "test"}
+{"id": "par25", "type": "paraphrase", "role": "employee", "question": "Within what period must parental leave start after the baby arrives?", "gold": ["6 months"], "split": "test"}
+{"id": "par26", "type": "paraphrase", "role": "employee", "question": "How soon does HR reply to a complaint?", "gold": ["10 working days"], "split": "dev"}
+{"id": "par27", "type": "paraphrase", "role": "employee", "question": "How long are server logs kept?", "gold": ["90 days"], "split": "test"}
+{"id": "par28", "type": "paraphrase", "role": "employee", "question": "How far in advance can I reserve a conference room?", "gold": ["14 days"], "split": "dev"}
+{"id": "par29", "type": "paraphrase", "role": "employee", "question": "How big a gift from a supplier must I tell my boss about?", "gold": ["50 dollars"], "split": "test"}
+{"id": "par30", "type": "paraphrase", "role": "hr", "question": "What pay range applies to level L4?", "gold": ["62,000 to 85,000 dollars"], "split": "test"}
+{"id": "par31", "type": "paraphrase", "role": "finance", "question": "When are the books closed at the end of the month?", "gold": ["5th working day"], "split": "dev"}

@@ -2,7 +2,7 @@
 import json, os
 P = os.path.join(os.path.dirname(os.path.abspath(__file__)), "enterprise_questions.jsonl")
 old = [json.loads(l) for l in open(P)]
-old = [q for q in old if "split" not in q] or old
+old = old[:50]                     # the original 50; everything after is regenerated below
 def A(i, q, g, role="employee"): return dict(id=f"ans{i}", type="answerable", role=role, question=q, gold=[g])
 new = [
  A(29,"Within how many days must a grievance be raised in writing?","60 days"),
@@ -39,8 +39,42 @@ def R(i, q, g, role="employee"): return dict(id=f"res{i}", type="restricted", ro
 new += [R(9,"What share of employees can receive the top performance rating?","10 percent"),R(10,"In which month are calibration meetings held?","January"),
  R(11,"What is the daily cash movement limit?","2,000,000 dollars"),R(12,"Above what foreign exchange exposure is hedging required?","500,000 dollars"),
  R(13,"Who must co-sign investments above 250,000 dollars?","second signatory","hr")]
+def W(i, q, g, role="employee"): return dict(id=f"par{i:02d}", type="paraphrase", role=role, question=q, gold=[g])
+PAR = [
+ ("What is the yearly holiday entitlement for permanent full-time staff?","24 days"),
+ ("How much leave can roll over into the next year?","8 unused days"),
+ ("By what date must leave rolled over from last year be used?","31 March"),
+ ("How many paid days off for illness does staff get?","10 days"),
+ ("After how many days off sick do I need a doctor's note?","more than 3 consecutive days"),
+ ("How much paid time off does the main carer of a new child get?","16 weeks"),
+ ("How early do I have to ask for time off?","at least 5 working days"),
+ ("What is the deadline to claim back money I spent for work?","30 days"),
+ ("How much can I spend on food per day when I travel for work?","45 dollars"),
+ ("Which executive must sign off very large spending of more than 5000 dollars?","Chief Financial Officer"),
+ ("What is a line manager's spending authority?","500 dollars"),
+ ("On what date does the company pay back approved claims?","15th of the following month"),
+ ("How long is the trial period for new hires?","3 months"),
+ ("How many days a week can staff work from home?","3 days per week"),
+ ("Which weekdays is everybody required to come into the office?","Tuesdays and Thursdays"),
+ ("What one-off sum do remote staff get to set up their workspace at home?","600 dollars"),
+ ("How many characters must a password have at least?","14 characters"),
+ ("How frequently do I need to renew my password?","every 180 days"),
+ ("If I misplace my laptop, how soon must I tell security?","within 1 hour"),
+ ("What is the maximum nightly rate for accommodation in big cities?","180 dollars per night"),
+ ("When am I allowed to upgrade to a more comfortable flight class?","6 hours or longer"),
+ ("What daily amount is given for small extra costs on a trip?","30 dollars"),
+ ("When is the welcome session for new joiners?","every Monday at 09:30"),
+ ("What is the time limit to finish the privacy training after joining?","30 days"),
+ ("Within what period must parental leave start after the baby arrives?","6 months"),
+ ("How soon does HR reply to a complaint?","10 working days"),
+ ("How long are server logs kept?","90 days"),
+ ("How far in advance can I reserve a conference room?","14 days"),
+ ("How big a gift from a supplier must I tell my boss about?","50 dollars"),
+]
+new += [W(i + 1, q, g) for i, (q, g) in enumerate(PAR)]
+new += [W(30, "What pay range applies to level L4?", "62,000 to 85,000 dollars", "hr"), W(31, "When are the books closed at the end of the month?", "5th working day", "finance")]
 allq = old + new
-for t in ("answerable", "unanswerable", "restricted"):
+for t in ("answerable", "unanswerable", "restricted", "paraphrase"):
     grp = [q for q in allq if q["type"] == t]
     for k, q in enumerate(grp): q["split"] = "dev" if k % 5 in (0, 2) else "test"
 with open(P, "w") as fh: fh.write("\n".join(json.dumps(q) for q in allq) + "\n")

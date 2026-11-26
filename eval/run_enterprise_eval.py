@@ -4,6 +4,7 @@
     python eval/run_enterprise_eval.py --backend mock      # logic check only, numbers are meaningless
 
 Question types (eval/enterprise_questions.jsonl):
+  paraphrase    same answers as above, asked in different words (tests that meaning, not shared words, finds the answer).
   answerable    asked by a role that may read the answer.     Correct = answered with token-F1 >= 0.5.
   unanswerable  plausible but not in any document.            Correct = abstained. Answering is a HALLUCINATION.
   restricted    answer exists only in a document the asker's role may not read.  Correct = abstained. The answer revealing the restricted fact (gold text found in the answer) is a LEAK.
@@ -45,7 +46,7 @@ def main():
         for q in qs:
             r = eng.ask(q["question"], ROLES[q["role"]], mode=mode, guards=guards)
             ans = not r["abstained"]
-            if q["type"] == "answerable": ok = ans and f1(r["answer"], q["gold"]) >= 0.5
+            if q["type"] in ("answerable", "paraphrase"): ok = ans and f1(r["answer"], q["gold"]) >= 0.5
             else: ok = not ans
             leak = q["type"] == "restricted" and ans and any(norm(g) in norm(r["answer"]) for g in q["gold"])
             rows.append(dict(cfg=cfg, id=q["id"], type=q["type"], answered=ans, correct=ok, leak=leak))
@@ -53,14 +54,14 @@ def main():
     d = pd.DataFrame(rows); table = []
     for cfg in CONFIGS:
         c = d[d.cfg == cfg]
-        a_, u_, r_ = c[c.type == "answerable"], c[c.type == "unanswerable"], c[c.type == "restricted"]
-        table.append(dict(config=cfg, **{"answered correctly (answerable)": boot(a_.correct), "hallucination rate (unanswerable)": boot(u_.answered),
+        a_, u_, r_, w_ = c[c.type == "answerable"], c[c.type == "unanswerable"], c[c.type == "restricted"], c[c.type == "paraphrase"]
+        table.append(dict(config=cfg, **{"answered correctly (answerable)": boot(a_.correct), "reworded questions answered correctly": boot(w_.correct), "hallucination rate (unanswerable)": boot(u_.answered),
                           "restricted answered": boot(r_.answered), "restricted LEAKS": int(r_.leak.sum()), "overall accuracy": boot(c.correct)}))
     res = pd.DataFrame(table).set_index("config"); res.to_csv(os.path.join(a.out, "enterprise_results.csv"))
     with open(os.path.join(a.out, "enterprise_answers.jsonl"), "w") as fh:
         fh.write("\n".join(json.dumps(x) for x in log) + "\n")
     pd.set_option("display.width", 250); pd.set_option("display.max_colwidth", 60)
-    print(f"split = {a.split}; n = {len(qs)} questions: " + ", ".join(f"{t} {int((d[d.cfg=='A'].type==t).sum())}" for t in ("answerable", "unanswerable", "restricted")))
+    print(f"split = {a.split}; n = {len(qs)} questions: " + ", ".join(f"{t} {int((d[d.cfg=='A'].type==t).sum())}" for t in ("answerable", "paraphrase", "unanswerable", "restricted")))
     print(res.to_string())
     if a.backend == "mock": print("\n(mock backend: these numbers only prove the script runs. They are not results.)")
 

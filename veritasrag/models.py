@@ -14,6 +14,14 @@ def _extract(question, passages, min_overlap=2):
             if o > bs: best, bs = s, o
     return best if best and bs >= min_overlap else "UNANSWERABLE"
 
+def _best_sentence(rerank, question, passages):
+    """Pick the sentence that best answers the question by MEANING (cross-encoder score), not by shared words,
+    so a reworded question still finds its answer. Whether to answer at all is decided earlier by the engine's guards."""
+    sents = [x for p in passages for x in sentences(p)]
+    if not sents: return "UNANSWERABLE"
+    scores = rerank(question, sents)
+    return sents[max(range(len(sents)), key=lambda i: scores[i])]
+
 class OnnxBackend:
     """Same two models as RealBackend (bge-small-en-v1.5 and ms-marco-MiniLM-L-6-v2) run through ONNX, with no PyTorch.
     Small enough for a 512 MB free host. Answers are extractive (best-matching sentence)."""
@@ -29,7 +37,7 @@ class OnnxBackend:
     def rerank(self, question, passages):
         return [float(x) for x in self.cross.rerank(question, list(passages))]
     def generate(self, question, passages):
-        return _extract(question, passages)
+        return _best_sentence(self.rerank, question, passages)
 
 class MockBackend:
     name = "mock"
@@ -68,7 +76,7 @@ class RealBackend:
     def rerank(self, question, passages):
         return [float(x) for x in self.cross.predict([(question, p) for p in passages], batch_size=32)]
     def generate(self, question, passages):
-        if self.gmod is None: return _extract(question, passages)
+        if self.gmod is None: return _best_sentence(self.rerank, question, passages)
         import torch
         msgs = [{"role": "system", "content": SYSTEM},
                 {"role": "user", "content": f"Context:\n" + "\n\n".join(passages) + f"\n\nQuestion: {question}"}]
